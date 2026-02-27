@@ -29,5 +29,5 @@ func main() {
 		return
 	}
 
-	fmt.Println("demo OK ✅ (cmd/demo is calling internal/buildium successfully)")
+	fmt.Println("demo OK (cmd/demo is calling internal/buildium successfully)")
 }
