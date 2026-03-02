@@ -10,7 +10,6 @@ import (
 )
 
 func (c *Client) ListActiveLeases(ctx context.Context) ([]Lease, error) {
-	// Full scan
 	return c.listActiveLeasesPaged(ctx, 0)
 }
 
@@ -34,9 +33,8 @@ func (c *Client) listActiveLeasesPaged(ctx context.Context, maxPages int) ([]Lea
 
 	for {
 		if maxPages > 0 && pages >= maxPages {
-			return nil, fmt.Errorf("max-pages cap requested, but capped paging is not implemented yet; run with --max-pages=0 for full scan OR I can add ListActiveLeasesLimited to internal/buildium")
-			// If you’d rather return partial results instead of erroring:
-			// break
+			// hit safety cap: return partial results
+			break
 		}
 
 		q := url.Values{}
@@ -59,26 +57,26 @@ func (c *Client) listActiveLeasesPaged(ctx context.Context, maxPages int) ([]Lea
 		}
 
 		all = append(all, items...)
+		pages++
 
 		if len(items) < limit {
 			break
 		}
 
 		offset += limit
-		pages++
 	}
 
 	return all, nil
 }
 
 func decodeLeaseList(raw json.RawMessage) ([]Lease, error) {
-	// First try direct array
+	// Try direct array
 	var arr []Lease
 	if err := json.Unmarshal(raw, &arr); err == nil {
 		return arr, nil
 	}
 
-	// Then try wrapped format { "Items": [...] }
+	// Try wrapped format { "Items": [...] }
 	var wrapped struct {
 		Items []Lease `json:"Items"`
 	}
