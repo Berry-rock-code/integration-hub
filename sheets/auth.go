@@ -10,9 +10,11 @@ import (
 	"google.golang.org/api/sheets/v4"
 )
 
-// Env vars supported:
-// - GOOGLE_APPLICATION_CREDENTIALS: path to service account JSON file
-// - GOOGLE_SHEETS_CREDENTIALS_JSON: raw JSON string (optional alternative)
+// NewServiceFromEnv creates a Sheets client using:
+//
+// 1) GOOGLE_SHEETS_CREDENTIALS_JSON
+// 2) GOOGLE_APPLICATION_CREDENTIALS (file path)
+// 3) Application Default Credentials (Cloud Run / GCE / gcloud auth)
 func NewServiceFromEnv(ctx context.Context) (*sheets.Service, error) {
 	if jsonStr := strings.TrimSpace(os.Getenv("GOOGLE_SHEETS_CREDENTIALS_JSON")); jsonStr != "" {
 		return sheets.NewService(ctx, option.WithCredentialsJSON([]byte(jsonStr)))
@@ -26,5 +28,6 @@ func NewServiceFromEnv(ctx context.Context) (*sheets.Service, error) {
 		return sheets.NewService(ctx, option.WithCredentialsJSON(b))
 	}
 
-	return nil, fmt.Errorf("missing credentials: set GOOGLE_APPLICATION_CREDENTIALS (file path) or GOOGLE_SHEETS_CREDENTIALS_JSON (raw json)")
+	// Cloud Run / GCP default credentials fallback
+	return sheets.NewService(ctx, option.WithScopes(sheets.SpreadsheetsScope))
 }
